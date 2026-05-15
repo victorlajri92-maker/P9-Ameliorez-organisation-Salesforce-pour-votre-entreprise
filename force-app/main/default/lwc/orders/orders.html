@@ -1,0 +1,30 @@
+<!-- COMPOSANT LWC : orders (orders.html) -->
+<!-- RÔLE MÉTIER : Affiche sur la fiche d'un compte Salesforce soit un message d'erreur
+     (si aucune commande activée ou total = 0), soit le total des commandes en euros.
+     Ce composant est visible directement par les commerciaux sur la page du compte client. -->
+
+<!-- LOGIQUE D'AFFICHAGE :
+     - hasOrders = false → bloc rouge : "Erreur, pas de commandes..."
+     - hasOrders = true  → bloc vert  : "Total des Commandes : 1 354 390"
+     La propriété "hasOrders" est calculée dans orders.js -->
+
+<template>
+    <!-- CAS 1 : pas de commandes activées ou total = 0 -->
+    <!-- if:false={hasOrders} = affiche ce bloc quand hasOrders est faux -->
+    <!-- slds-theme_error = style SLDS rouge (Salesforce Lightning Design System) -->
+    <template if:false={hasOrders}>
+        <div class="slds-box slds-theme_error">
+            <h1>Erreur, pas de commandes rattachées à ce compte ou le montant des commandes est égale à 0.</h1>
+        </div>
+    </template>
+
+    <!-- CAS 2 : des commandes activées existent avec un total > 0 -->
+    <!-- if:true={hasOrders} = affiche ce bloc quand hasOrders est vrai -->
+    <!-- slds-theme_success = style SLDS vert -->
+    <!-- {sumOrdersOfCurrentAccount} = affiche la valeur retournée par Apex -->
+    <template if:true={hasOrders}>
+        <div class="slds-box slds-theme_success">
+            <h1>Total des Commandes : {sumOrdersOfCurrentAccount}</h1>
+        </div>
+    </template>
+</template>

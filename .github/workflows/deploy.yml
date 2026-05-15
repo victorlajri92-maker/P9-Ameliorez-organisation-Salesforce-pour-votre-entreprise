@@ -1,0 +1,54 @@
+name: Deploy and Validate Metadata
+
+on:
+  pull_request:
+    branches:
+      - main
+
+  push:
+    branches:
+      - main
+
+jobs:
+  sfdxvalidate:
+    name: "Run SFDX Validate"
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install SFDX CLI and sfdx-git-delta plugin
+        run: |
+          npm install -g @salesforce/cli@latest
+          echo "y" | npm install sfdx-git-delta@3.3.0 -g
+
+      - name: Authentification Salesforce
+        run: |
+          echo "${{ secrets.SFDX_AUTH_URL }}" > sfdx_auth_url.txt
+          sf org login sfdx-url --sfdx-url-file sfdx_auth_url.txt --set-default --alias target-org
+          rm sfdx_auth_url.txt
+
+      - name: Generate metadata delta
+        run: |
+          mkdir -p .temp
+          sgd --to HEAD --from HEAD~1 --repo . --output .temp --source force-app
+
+      - name: Déployer les métadonnées sur la branche main
+        if: github.ref == 'refs/heads/main'
+        run: |
+          sf project deploy start \
+            --manifest .temp/package/package.xml \
+            --target-org target-org \
+            --test-level RunLocalTests \
+            --wait 30
